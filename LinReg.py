@@ -59,4 +59,4 @@ if uploaded_file:
             st.markdown(f"**Intercept:** {model.intercept_:.4f}")
         else:
             st.markdown("**Intercept:** forced to 0")
-        st.markdown(f"**R² score:** {r2:.4f}"
+        st.markdown(f"**R² score:** {r2:.4f}")
