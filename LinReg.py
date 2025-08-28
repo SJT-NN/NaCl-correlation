@@ -20,6 +20,12 @@ if uploaded_file:
     x_col = st.selectbox("Select X-axis column", cols)
     y_col = st.selectbox("Select Y-axis column", cols)
 
+    # Optional: select column for y-error values
+    yerr_col = st.selectbox(
+        "Select Y-error column (optional)",
+        ["None"] + cols
+    )
+
     # --- Options ---
     through_origin = st.checkbox("Force regression through (0,0)")
     show_interval = st.checkbox("Show ±20% interval in green")
@@ -38,6 +44,15 @@ if uploaded_file:
         X = X.loc[common_idx]
         y = y.loc[common_idx]
 
+        # If y-error column selected, align it too
+        yerr = None
+        if yerr_col != "None":
+            yerr_data = df[yerr_col].dropna()
+            common_idx = common_idx.intersection(yerr_data.index)
+            X = X.loc[common_idx]
+            y = y.loc[common_idx]
+            yerr = yerr_data.loc[common_idx].values
+
         # --- Regression model ---
         if through_origin:
             model = LinearRegression(fit_intercept=False)
@@ -50,7 +65,12 @@ if uploaded_file:
 
         # --- Plot ---
         fig, ax = plt.subplots()
-        ax.scatter(X, y, label="Data points", alpha=0.7)
+
+        if yerr is not None:
+            ax.errorbar(X[x_col], y, yerr=yerr, fmt='o', alpha=0.7, label="Data points with error")
+        else:
+            ax.scatter(X, y, label="Data points", alpha=0.7)
+
         ax.plot(X, y_pred, color="red", linewidth=2, label="Regression line")
 
         # Always show y = x for reference
