@@ -26,7 +26,12 @@ if uploaded_file:
         ["None"] + cols
     )
 
-    # --- Options ---
+    # --- Display options ---
+    point_size = st.slider("Scatter point size", min_value=10, max_value=200, value=50)
+    plot_width = st.slider("Plot width (inches)", min_value=4, max_value=16, value=8)
+    plot_height = st.slider("Plot height (inches)", min_value=4, max_value=12, value=6)
+
+    # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
     show_interval = st.checkbox("Show ±20% interval in green")
     interval_source = st.selectbox(
@@ -63,15 +68,35 @@ if uploaded_file:
         y_pred = model.predict(X)
         r2 = r2_score(y, y_pred)
 
+        slope_val = model.coef_[0]
+        intercept_val = model.intercept_ if not through_origin else 0
+
         # --- Plot ---
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
         if yerr is not None:
-            ax.errorbar(X[x_col], y, yerr=yerr, fmt='o', alpha=0.7, label="Data points with error")
+            ax.errorbar(
+                X[x_col], y,
+                yerr=yerr,
+                fmt='o',
+                alpha=0.7,
+                markersize=point_size / 10,  # errorbar uses markersize
+                label="Data points with error"
+            )
         else:
-            ax.scatter(X, y, label="Data points", alpha=0.7)
+            ax.scatter(
+                X, y,
+                s=point_size,
+                label="Data points",
+                alpha=0.7
+            )
 
-        ax.plot(X, y_pred, color="red", linewidth=2, label="Regression line")
+        # Regression line with slope/intercept/R² in legend
+        ax.plot(
+            X, y_pred,
+            color="red", linewidth=2,
+            label=f"Regression line (slope={slope_val:.4f}, intercept={intercept_val:.4f}, R²={r2:.4f})"
+        )
 
         # Always show y = x for reference
         x_range = np.linspace(X.min()[0], X.max()[0], 500)
@@ -80,12 +105,10 @@ if uploaded_file:
         # --- Optional ±20% interval ---
         if show_interval:
             if interval_source == "Regression line":
-                # Band from regression line
                 y_fit = model.predict(x_range.reshape(-1, 1))
                 y_plus = y_fit * 1.2
                 y_minus = y_fit * 0.8
             else:
-                # Band from identity line
                 y_identity = x_range
                 y_plus = y_identity * 1.2
                 y_minus = y_identity * 0.8
@@ -103,10 +126,10 @@ if uploaded_file:
 
         st.pyplot(fig)
 
-        # --- Results ---
-        st.markdown(f"**Slope:** {model.coef_[0]:.4f}")
+        # --- Results below plot ---
+        st.markdown(f"**Slope:** {slope_val:.4f}")
         if not through_origin:
-            st.markdown(f"**Intercept:** {model.intercept_:.4f}")
+            st.markdown(f"**Intercept:** {intercept_val:.4f}")
         else:
             st.markdown("**Intercept:** forced to 0")
-        st.markdown(f"**R² score:** {r2:.4f}")
+        st.markdown(f"**R² score:** {r2:.4f}"
