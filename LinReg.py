@@ -11,8 +11,16 @@ st.title("📊 Excel Correlation & Regression Visualizer")
 uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
 
 if uploaded_file:
-    df = pd.read_excel(uploaded_file)
-    st.subheader("Preview of Data")
+    # Get all sheet names first
+    xls = pd.ExcelFile(uploaded_file)
+    sheet_names = xls.sheet_names
+
+    # If multiple sheets, choose one
+    sheet_name = st.selectbox("Select sheet", sheet_names)
+
+    # Load chosen sheet
+    df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
+    st.subheader(f"Preview of Data — Sheet: {sheet_name}")
     st.dataframe(df.head())
 
     # --- Select columns ---
@@ -80,7 +88,7 @@ if uploaded_file:
                 yerr=yerr,
                 fmt='o',
                 alpha=0.7,
-                markersize=point_size / 10,  # errorbar uses markersize
+                markersize=point_size / 10,
                 label="Data points with error"
             )
         else:
