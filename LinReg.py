@@ -43,81 +43,88 @@ if uploaded_file:
     )
 
     if x_col and y_col:
-        # --- Clean data once ---
+        # --- Clean & align data ---
         required_cols = [x_col, y_col] if yerr_col == "None" else [x_col, y_col, yerr_col]
         df_valid = df[required_cols].dropna()
 
-        X = df_valid[[x_col]]
-        y = df_valid[y_col]
-        yerr = df_valid[yerr_col].values if yerr_col != "None" else None
+        # Convert all selected columns to numeric (force errors to NaN)
+        df_valid = df_valid.apply(pd.to_numeric, errors="coerce").dropna()
 
-        # --- Fit regression ---
-        model = LinearRegression(fit_intercept=not through_origin)
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        r2 = r2_score(y, y_pred)
-
-        slope_val = model.coef_[0]
-        intercept_val = model.intercept_ if not through_origin else 0
-
-        # --- Prepare X for smooth lines ---
-        x_min, x_max = X[x_col].min(), X[x_col].max()
-        x_range = np.linspace(x_min, x_max, 500)
-        sorted_idx = np.argsort(X[x_col])
-
-        # --- Plot ---
-        fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-
-        if yerr is not None:
-            ax.errorbar(
-                X[x_col], y,
-                yerr=yerr,
-                fmt='o',
-                alpha=0.7,
-                markersize=point_size / 10,
-                label="Data points with error"
-            )
+        # If nothing left after cleaning, stop
+        if df_valid.empty:
+            st.error("No valid numeric rows found after cleaning. Check your column selections.")
         else:
-            ax.scatter(
-                X, y,
-                s=point_size,
-                alpha=0.7,
-                label="Data points"
-            )
+            X = df_valid[[x_col]].values
+            y = df_valid[y_col].values
+            yerr = df_valid[yerr_col].values if yerr_col != "None" else None
 
-        # Regression line
-        ax.plot(
-            X.iloc[sorted_idx], y_pred[sorted_idx],
-            color="red", linewidth=2,
-            label=f"Regression line (slope={slope_val:.4f}, intercept={intercept_val:.4f}, R²={r2:.4f})"
-        )
+            # --- Fit regression ---
+            model = LinearRegression(fit_intercept=not through_origin)
+            model.fit(X, y)
+            y_pred = model.predict(X)
+            r2 = r2_score(y, y_pred)
 
-        # y = x reference line
-        ax.plot(x_range, x_range, color="gray", linestyle="--", label="y = x")
+            slope_val = model.coef_[0]
+            intercept_val = model.intercept_ if not through_origin else 0
 
-        # --- ±20% interval ---
-        if show_interval:
-            if interval_source == "Regression line":
-                y_fit = model.predict(x_range.reshape(-1, 1))
-                y_plus, y_minus = y_fit * 1.2, y_fit * 0.8
+            # --- Prepare smooth X range ---
+            x_min, x_max = X.min(), X.max()
+            x_range = np.linspace(x_min, x_max, 500)
+            sorted_idx = np.argsort(X.flatten())
+
+            # --- Plot ---
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+
+            if yerr is not None:
+                ax.errorbar(
+                    X.flatten(), y,
+                    yerr=yerr,
+                    fmt='o',
+                    alpha=0.7,
+                    markersize=point_size / 10,  # errorbar uses markersize
+                    label="Data points with error"
+                )
             else:
-                y_plus, y_minus = x_range * 1.2, x_range * 0.8
+                ax.scatter(
+                    X, y,
+                    s=point_size,
+                    alpha=0.7,
+                    label="Data points"
+                )
 
-            ax.fill_between(
-                x_range, y_minus, y_plus,
-                color="green", alpha=0.2,
-                label=f"±20% from {interval_source.lower()}"
+            # Regression line
+            ax.plot(
+                X[sorted_idx], y_pred[sorted_idx],
+                color="red", linewidth=2,
+                label=f"Regression line (slope={slope_val:.4f}, intercept={intercept_val:.4f}, R²={r2:.4f})"
             )
 
-        # Labels & legend
-        ax.set_xlabel(x_col)
-        ax.set_ylabel(y_col)
-        ax.grid(True)
-        ax.legend()
+            # y = x reference line
+            ax.plot(x_range, x_range, color="gray", linestyle="--", label="y = x")
 
-        st.pyplot(fig)
+            # ±20% interval
+            if show_interval:
+                if interval_source == "Regression line":
+                    y_fit = model.predict(x_range.reshape(-1, 1))
+                    y_plus, y_minus = y_fit * 1.2, y_fit * 0.8
+                else:
+                    y_plus, y_minus = x_range * 1.2, x_range * 0.8
 
-        # --- Numeric results ---
-        st.markdown(f"**Slope:** {slope_val:.4f}")
-        st.markdown(f"**Intercept:** {intercept_val:.4f}" if not through_origin else "**Intercept:** forced to 0")
-        st.markdown(f"**R² score:** {r2:.4f}")
+                ax.fill_between(
+                    x_range, y_minus, y_plus,
+                    color="green", alpha=0.2,
+                    label=f"±20% from {interval_source.lower()}"
+                )
+
+            # Labels & legend
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+            ax.grid(True)
+            ax.legend()
+
+            st.pyplot(fig)
+
+            # --- Numeric results below plot ---
+            st.markdown(f"**Slope:** {slope_val:.4f}")
+            st.markdown(f"**Intercept:** {intercept_val:.4f}" if not through_origin else "**Intercept:** forced to 0")
+            st.markdown(f"**R² score:** {r2:.4f}")
