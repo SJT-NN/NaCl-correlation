@@ -29,6 +29,10 @@ if uploaded_file:
     y_col = st.selectbox("Select Y-axis column", cols)
     yerr_col = st.selectbox("Select Y-error column (optional)", ["None"] + cols)
 
+    # --- Axis label inputs ---
+    custom_x_label = st.text_input("Custom X-axis label", value=x_col)
+    custom_y_label = st.text_input("Custom Y-axis label", value=y_col)
+
     # --- Display options ---
     point_size = st.slider("Scatter point size", 10, 200, 50)
     plot_width = st.slider("Plot width (inches)", 4, 16, 8)
@@ -81,7 +85,7 @@ if uploaded_file:
                     yerr=yerr,
                     fmt='o',
                     alpha=0.7,
-                    markersize=point_size / 10,  # errorbar uses markersize
+                    markersize=point_size / 10,
                     label="Data points with error"
                 )
             else:
@@ -117,8 +121,8 @@ if uploaded_file:
                 )
 
             # Labels & legend
-            ax.set_xlabel(x_col)
-            ax.set_ylabel(y_col)
+            ax.set_xlabel(custom_x_label)
+            ax.set_ylabel(custom_y_label)
             ax.grid(True)
             ax.legend()
 
@@ -127,4 +131,4 @@ if uploaded_file:
             # --- Numeric results below plot ---
             st.markdown(f"**Slope:** {slope_val:.4f}")
             st.markdown(f"**Intercept:** {intercept_val:.4f}" if not through_origin else "**Intercept:** forced to 0")
-            st.markdown(f"**R² score:** {r2:.4f}")
+            st.markdown(f"**R² score:** {r2:.4f}"
