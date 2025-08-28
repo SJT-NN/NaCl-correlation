@@ -131,4 +131,4 @@ if uploaded_file:
             # --- Numeric results below plot ---
             st.markdown(f"**Slope:** {slope_val:.4f}")
             st.markdown(f"**Intercept:** {intercept_val:.4f}" if not through_origin else "**Intercept:** forced to 0")
-            st.markdown(f"**R² score:** {r2:.4f}"
+            st.markdown(f"**R² score:** {r2:.4f}")
