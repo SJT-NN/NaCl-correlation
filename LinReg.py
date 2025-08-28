@@ -28,7 +28,12 @@ if uploaded_file:
     x_col = st.selectbox("Select X-axis column", cols)
     y_col = st.selectbox("Select Y-axis column", cols)
     yerr_col = st.selectbox("Select Y-error column (optional)", ["None"] + cols)
-
+    start_row = st.number_input(
+    "Start from row number:", min_value=0, value=0, step=1)
+    
+    df = pd.read_csv(uploaded_file, skiprows=range(1, start_row+1))
+    st.dataframe(df)
+    
     # --- Axis label inputs ---
     custom_x_label = st.text_input("Custom X-axis label", value=x_col)
     custom_y_label = st.text_input("Custom Y-axis label", value=y_col)
