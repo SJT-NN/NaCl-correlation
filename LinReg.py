@@ -18,8 +18,13 @@ if uploaded_file:
     # Select sheet
     sheet_name = st.selectbox("Select sheet", sheet_names)
 
-    # Load chosen sheet
-    df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
+    # Start row option
+    start_row = st.number_input(
+        "Start from row number:", min_value=0, value=0, step=1
+    )
+
+    # Load chosen sheet with row skip
+    df = pd.read_excel(uploaded_file, sheet_name=sheet_name, skiprows=range(1, start_row + 1))
     st.subheader(f"Preview of Data — Sheet: {sheet_name}")
     st.dataframe(df.head())
 
@@ -28,8 +33,7 @@ if uploaded_file:
     x_col = st.selectbox("Select X-axis column", cols)
     y_col = st.selectbox("Select Y-axis column", cols)
     yerr_col = st.selectbox("Select Y-error column (optional)", ["None"] + cols)
-    start_row = st.number_input(
-    "Start from row number:", min_value=0, value=0, step=1)
+    category_col = st.selectbox("Select Category column for coloring (optional)", ["None"] + cols)
         
     # --- Axis label inputs ---
     custom_x_label = st.text_input("Custom X-axis label", value=x_col)
@@ -50,13 +54,18 @@ if uploaded_file:
 
     if x_col and y_col:
         # --- Clean & align data ---
-        required_cols = [x_col, y_col] if yerr_col == "None" else [x_col, y_col, yerr_col]
+        required_cols = [x_col, y_col]
+        if yerr_col != "None":
+            required_cols.append(yerr_col)
+        if category_col != "None":
+            required_cols.append(category_col)
+
         df_valid = df[required_cols].dropna()
+        # Convert numeric columns
+        for col in [x_col, y_col] + ([] if yerr_col == "None" else [yerr_col]):
+            df_valid[col] = pd.to_numeric(df_valid[col], errors="coerce")
+        df_valid = df_valid.dropna()
 
-        # Convert all selected columns to numeric (force errors to NaN)
-        df_valid = df_valid.apply(pd.to_numeric, errors="coerce").dropna()
-
-        # If nothing left after cleaning, stop
         if df_valid.empty:
             st.error("No valid numeric rows found after cleaning. Check your column selections.")
         else:
@@ -81,22 +90,45 @@ if uploaded_file:
             # --- Plot ---
             fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
-            if yerr is not None:
-                ax.errorbar(
-                    X.flatten(), y,
-                    yerr=yerr,
-                    fmt='o',
-                    alpha=0.7,
-                    markersize=point_size / 10,
-                    label="Data points with error"
-                )
+            if category_col != "None":
+                categories = df_valid[category_col].astype(str).unique()
+                cmap = plt.get_cmap("tab10")
+                for idx, cat in enumerate(categories):
+                    mask = df_valid[category_col].astype(str) == cat
+                    if yerr is not None:
+                        ax.errorbar(
+                            X[mask].flatten(), y[mask],
+                            yerr=yerr[mask] if yerr is not None else None,
+                            fmt='o', alpha=0.7,
+                            markersize=point_size / 10,
+                            label=str(cat),
+                            color=cmap(idx % 10)
+                        )
+                    else:
+                        ax.scatter(
+                            X[mask], y[mask],
+                            s=point_size, alpha=0.7,
+                            label=str(cat),
+                            color=cmap(idx % 10)
+                        )
+                ax.legend(title=category_col)
             else:
-                ax.scatter(
-                    X, y,
-                    s=point_size,
-                    alpha=0.7,
-                    label="Data points"
-                )
+                if yerr is not None:
+                    ax.errorbar(
+                        X.flatten(), y,
+                        yerr=yerr,
+                        fmt='o',
+                        alpha=0.7,
+                        markersize=point_size / 10,
+                        label="Data points with error"
+                    )
+                else:
+                    ax.scatter(
+                        X, y,
+                        s=point_size,
+                        alpha=0.7,
+                        label="Data points"
+                    )
 
             # Regression line
             ax.plot(
