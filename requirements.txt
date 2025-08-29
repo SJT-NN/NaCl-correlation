@@ -3,3 +3,5 @@ streamlit
 scikit-learn
 matplotlib
 openpyxl
+seaborn
+colorcet
