@@ -46,8 +46,12 @@ if uploaded_file:
 
     # --- Display options ---
     point_size = st.slider("Scatter point size", 10, 200, 50)
-    plot_width = st.slider("Plot width (inches)", 4, 16, 8)
-    plot_height = st.slider("Plot height (inches)", 4, 12, 6)
+    plot_width = st.slider("Plot width", 4, 16, 8)
+    plot_height = st.slider("Plot height", 4, 12, 6)
+    xlim_min = st.number_input("X-axis minimum", value=float(df[x_col].min()))
+    xlim_max = st.number_input("X-axis maximum", value=float(df[x_col].max()))
+    ylim_min = st.number_input("Y-axis minimum", value=float(df[y_col].min()))
+    ylim_max = st.number_input("Y-axis maximum", value=float(df[y_col].max()))
 
     # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
@@ -112,7 +116,7 @@ if uploaded_file:
                 fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
                 if category_col != "None":
-                    cmap = plt.get_cmap("tab10")
+                    cmap = plt.get_cmap("tab20")
                     for idx, cat in enumerate(selected_categories):
                         mask = df_filtered[category_col].astype(str) == cat
                         if yerr is not None:
@@ -176,6 +180,8 @@ if uploaded_file:
                 ax.set_xlabel(custom_x_label)
                 ax.set_ylabel(custom_y_label)
                 ax.set_title(custom_title)
+                ax.set_xlim(xlim_min, xlim_max)
+                ax.set_ylim(ylim_min, ylim_max)
                 ax.grid(True)
                 ax.legend()
 
