@@ -54,6 +54,7 @@ if uploaded_file:
     through_origin = st.checkbox("Force regression through (0,0)")
     show_interval = st.checkbox("Show ±20% interval in green")
     interval_source = st.selectbox("Interval source", ["Regression line", "y = x identity line"])
+    use_custom_legend = st.checkbox("Place legend outside of plot", value=False)
 
     if x_col and y_col:
         required_cols = [x_col, y_col]
@@ -186,7 +187,10 @@ if uploaded_file:
                 ax.set_xlim(xlim_min, xlim_max)
                 ax.set_ylim(ylim_min, ylim_max)
                 ax.grid(True)
-                ax.legend(loc='center right',bbox_to_anchor=(1.5,0.5),fontsize=10)
+                if use_custom_legend:
+                    ax.legend(loc='center right', bbox_to_anchor=(1.5, 0.5), fontsize=10)
+                else:
+                    ax.legend()
 
                 st.pyplot(fig)
 
