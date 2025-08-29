@@ -42,7 +42,7 @@ if uploaded_file:
     # --- Axis label inputs ---
     custom_x_label = st.text_input("Custom X-axis label", value=x_col)
     custom_y_label = st.text_input("Custom Y-axis label", value=y_col)
-    custom_title = st.text_input("Custom title",value = title)
+    custom_title = st.text_input("Custom title", value="")
 
     # --- Display options ---
     point_size = st.slider("Scatter point size", 10, 200, 50)
@@ -175,7 +175,7 @@ if uploaded_file:
                 # Labels & legend
                 ax.set_xlabel(custom_x_label)
                 ax.set_ylabel(custom_y_label)
-                ax.title(custom_title)
+                ax.set_title(custom_title)
                 ax.grid(True)
                 ax.legend()
 
