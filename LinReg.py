@@ -186,7 +186,7 @@ if uploaded_file:
                 ax.set_xlim(xlim_min, xlim_max)
                 ax.set_ylim(ylim_min, ylim_max)
                 ax.grid(True)
-                ax.legend(loc='center right',bbox_to_anchor=(1.5,0.5),fontsize=8)
+                ax.legend(loc='center right',bbox_to_anchor=(1.5,0.5),fontsize=10)
 
                 st.pyplot(fig)
 
