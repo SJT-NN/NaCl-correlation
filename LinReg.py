@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
 st.title("📊 Excel Correlation & Regression Visualizer")
-
+st.text("The code can be found on https://github.com/SJT-NN?tab=repositories")
 # --- Upload Excel file ---
 uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
 
