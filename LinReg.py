@@ -96,16 +96,25 @@ if uploaded_file:
                 yerr = df_filtered[yerr_col].values if yerr_col != "None" else None
 
             if not df_filtered.empty:
-                # Safe numeric min/max defaults
-                x_min_val = float(df_filtered[x_col].min())
-                x_max_val = float(df_filtered[x_col].max())
-                y_min_val = float(df_filtered[y_col].min())
-                y_max_val = float(df_filtered[y_col].max())
+                # Safe numeric min/max defaults from filtered data
+                x_data_min = float(df_filtered[x_col].min())
+                x_data_max = float(df_filtered[x_col].max())
+                y_data_min = float(df_filtered[y_col].min())
+                y_data_max = float(df_filtered[y_col].max())
 
-                xlim_min = st.slider("X-axis minimum", value=x_min_val)
-                xlim_max = st.slider("X-axis maximum", value=x_max_val)
-                ylim_min = st.slider("Y-axis minimum", value=y_min_val)
-                ylim_max = st.slider("Y-axis maximum", value=y_max_val)
+                # Option to pad min/max by ±1
+                pad_axes = st.checkbox("Expand axis limits by ±1", value=False)
+                if pad_axes:
+                    x_data_min -= 1
+                    x_data_max += 1
+                    y_data_min -= 1
+                    y_data_max += 1
+
+                # One slider for X limits
+                xlim_min, xlim_max = st.slider("X-axis range",min_value=float(x_data_min),max_value=float(x_data_max),value=(float(x_data_min), float(x_data_max)),step=0.1)
+
+                # One slider for Y limits
+                ylim_min, ylim_max = st.slider("Y-axis range",min_value=float(y_data_min),max_value=float(y_data_max),value=(float(y_data_min), float(y_data_max)),step=0.1)
 
                 # --- Fit regression on filtered data ---
                 model = LinearRegression(fit_intercept=not through_origin)
