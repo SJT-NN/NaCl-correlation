@@ -102,10 +102,10 @@ if uploaded_file:
                 y_min_val = float(df_filtered[y_col].min())
                 y_max_val = float(df_filtered[y_col].max())
 
-                xlim_min = st.number_input("X-axis minimum", value=x_min_val)
-                xlim_max = st.number_input("X-axis maximum", value=x_max_val)
-                ylim_min = st.number_input("Y-axis minimum", value=y_min_val)
-                ylim_max = st.number_input("Y-axis maximum", value=y_max_val)
+                xlim_min = st.slider("X-axis minimum", value=x_min_val)
+                xlim_max = st.slider("X-axis maximum", value=x_max_val)
+                ylim_min = st.slider("Y-axis minimum", value=y_min_val)
+                ylim_max = st.slider("Y-axis maximum", value=y_max_val)
 
                 # --- Fit regression on filtered data ---
                 model = LinearRegression(fit_intercept=not through_origin)
