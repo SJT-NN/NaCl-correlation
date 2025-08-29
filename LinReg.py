@@ -2,11 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import colorcet as cc
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
 st.title("📊 Excel Correlation & Regression Visualizer")
 st.text("The code can be found on https://github.com/SJT-NN?tab=repositories")
+
 # --- Upload Excel file ---
 uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
 
@@ -18,17 +21,9 @@ if uploaded_file:
     # Select sheet
     sheet_name = st.selectbox("Select sheet", sheet_names)
 
-    # Start row option
-    start_row = st.number_input(
-        "Start from row number:", min_value=0, value=0, step=1
-    )
+    # Load selected sheet
+    df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
 
-    # Load chosen sheet with row skip
-    df = pd.read_excel(
-        uploaded_file,
-        sheet_name=sheet_name,
-        skiprows=range(1, start_row + 1)
-    )
     st.subheader(f"Preview of Data — Sheet: {sheet_name}")
     st.dataframe(df.head())
 
@@ -38,7 +33,13 @@ if uploaded_file:
     y_col = st.selectbox("Select Y-axis column", cols)
     yerr_col = st.selectbox("Select Y-error column (optional)", ["None"] + cols)
     category_col = st.selectbox("Select Category column for coloring (optional)", ["None"] + cols)
-        
+
+    # --- Color palette selector ---
+    palette_source = st.selectbox(
+        "Choose color palette source",
+        ["Matplotlib tab20", "Seaborn deep", "Seaborn Set3", "ColorCET glasbey"]
+    )
+
     # --- Axis label inputs ---
     custom_x_label = st.text_input("Custom X-axis label", value=x_col)
     custom_y_label = st.text_input("Custom Y-axis label", value=y_col)
@@ -49,17 +50,12 @@ if uploaded_file:
     plot_width = st.slider("Plot width", 4, 16, 8)
     plot_height = st.slider("Plot height", 4, 12, 6)
 
-
     # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
     show_interval = st.checkbox("Show ±20% interval in green")
-    interval_source = st.selectbox(
-        "Interval source",
-        ["Regression line", "y = x identity line"]
-    )
+    interval_source = st.selectbox("Interval source", ["Regression line", "y = x identity line"])
 
     if x_col and y_col:
-        # --- Clean & align data ---
         required_cols = [x_col, y_col]
         if yerr_col != "None":
             required_cols.append(yerr_col)
@@ -68,7 +64,6 @@ if uploaded_file:
 
         df_valid = df[required_cols].dropna()
 
-        # Convert numeric columns
         for col in [x_col, y_col] + ([] if yerr_col == "None" else [yerr_col]):
             df_valid[col] = pd.to_numeric(df_valid[col], errors="coerce")
         df_valid = df_valid.dropna()
@@ -88,35 +83,29 @@ if uploaded_file:
             else:
                 df_filtered = df_valid.copy()
 
-            if df_filtered.empty:
-                st.error("No data to display after filtering. Check your selections.")
-            else:
+            if not df_filtered.empty:
                 X = df_filtered[[x_col]].values
                 y = df_filtered[y_col].values
                 yerr = df_filtered[yerr_col].values if yerr_col != "None" else None
 
-            if not df_filtered.empty:
-                # Safe numeric min/max defaults from filtered data
-                x_data_min = float(df_filtered[x_col].min())
-                x_data_max = float(df_filtered[x_col].max())
-                y_data_min = float(df_filtered[y_col].min())
-                y_data_max = float(df_filtered[y_col].max())
+                # Axis limits
+                x_data_min, x_data_max = float(df_filtered[x_col].min()), float(df_filtered[x_col].max())
+                y_data_min, y_data_max = float(df_filtered[y_col].min()), float(df_filtered[y_col].max())
 
-                # Option to pad min/max by ±1
-                pad_axes = st.checkbox("Expand axis limits by ±1", value=False)
-                if pad_axes:
-                    x_data_min -= 1
-                    x_data_max += 1
-                    y_data_min -= 1
-                    y_data_max += 1
+                if st.checkbox("Expand axis limits by ±1", value=False):
+                    x_data_min -= 1; x_data_max += 1
+                    y_data_min -= 1; y_data_max += 1
 
-                # One slider for X limits
-                xlim_min, xlim_max = st.slider("X-axis range",min_value=float(x_data_min),max_value=float(x_data_max),value=(float(x_data_min), float(x_data_max)),step=0.1)
+                xlim_min, xlim_max = st.slider("X-axis range",
+                    min_value=float(x_data_min), max_value=float(x_data_max),
+                    value=(float(x_data_min), float(x_data_max)), step=0.1
+                )
+                ylim_min, ylim_max = st.slider("Y-axis range",
+                    min_value=float(y_data_min), max_value=float(y_data_max),
+                    value=(float(y_data_min), float(y_data_max)), step=0.1
+                )
 
-                # One slider for Y limits
-                ylim_min, ylim_max = st.slider("Y-axis range",min_value=float(y_data_min),max_value=float(y_data_max),value=(float(y_data_min), float(y_data_max)),step=0.1)
-
-                # --- Fit regression on filtered data ---
+                # Regression fit
                 model = LinearRegression(fit_intercept=not through_origin)
                 model.fit(X, y)
                 y_pred = model.predict(X)
@@ -125,48 +114,48 @@ if uploaded_file:
                 slope_val = model.coef_[0]
                 intercept_val = model.intercept_ if not through_origin else 0
 
-                # --- Prepare smooth X range ---
                 x_min, x_max = X.min(), X.max()
                 x_range = np.linspace(x_min, x_max, 500)
                 sorted_idx = np.argsort(X.flatten())
 
-                # --- Plot ---
                 fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
+                # Build color list
                 if category_col != "None":
-                    cmap = plt.get_cmap("tab20")
+                    if palette_source.startswith("Matplotlib"):
+                        colors = plt.get_cmap("tab20").colors
+                    elif palette_source.startswith("Seaborn"):
+                        sns_name = palette_source.split(" ")[1]
+                        colors = sns.color_palette(sns_name, n_colors=len(selected_categories))
+                    elif palette_source.startswith("ColorCET"):
+                        colors = list(cc.glasbey)
+
                     for idx, cat in enumerate(selected_categories):
                         mask = df_filtered[category_col].astype(str) == cat
+                        color = colors[idx % len(colors)]
                         if yerr is not None:
                             ax.errorbar(
-                                X[mask].flatten(), y[mask],
-                                yerr=yerr[mask],
-                                fmt='o', alpha=0.7,
-                                markersize=point_size / 10,
-                                label=str(cat),
-                                color=cmap(idx % 10)
+                                X[mask].flatten(), y[mask], yerr=yerr[mask],
+                                fmt='o', alpha=0.7, markersize=point_size/10,
+                                label=str(cat), color=color
                             )
                         else:
                             ax.scatter(
                                 X[mask], y[mask],
                                 s=point_size, alpha=0.7,
-                                label=str(cat),
-                                color=cmap(idx % 10)
+                                label=str(cat), color=color
                             )
                     ax.legend(title=category_col)
                 else:
                     if yerr is not None:
                         ax.errorbar(
                             X.flatten(), y, yerr=yerr,
-                            fmt='o', alpha=0.7,
-                            markersize=point_size / 10,
+                            fmt='o', alpha=0.7, markersize=point_size/10,
                             label="Data points with error"
                         )
                     else:
                         ax.scatter(
-                            X, y,
-                            s=point_size,
-                            alpha=0.7,
+                            X, y, s=point_size, alpha=0.7,
                             label="Data points"
                         )
 
@@ -177,7 +166,7 @@ if uploaded_file:
                     label=f"Regression line (slope={slope_val:.4f}, intercept={intercept_val:.4f}, R²={r2:.4f})"
                 )
 
-                # y = x reference line
+                # y = x line
                 ax.plot(x_range, x_range, color="gray", linestyle="--", label="y = x")
 
                 # ±20% interval
@@ -188,13 +177,9 @@ if uploaded_file:
                     else:
                         y_plus, y_minus = x_range * 1.2, x_range * 0.8
 
-                    ax.fill_between(
-                        x_range, y_minus, y_plus,
-                        color="green", alpha=0.2,
-                        label=f"±20% from {interval_source.lower()}"
-                    )
+                    ax.fill_between(x_range, y_minus, y_plus, color="green", alpha=0.2,
+                                    label=f"±20% from {interval_source.lower()}")
 
-                # Labels & legend
                 ax.set_xlabel(custom_x_label)
                 ax.set_ylabel(custom_y_label)
                 ax.set_title(custom_title)
@@ -205,7 +190,6 @@ if uploaded_file:
 
                 st.pyplot(fig)
 
-                # --- Numeric results below plot ---
                 st.markdown(f"**Slope:** {slope_val:.4f}")
                 st.markdown(f"**Intercept:** {intercept_val:.4f}" if not through_origin else "**Intercept:** forced to 0")
                 st.markdown(f"**R² score:** {r2:.4f}")
