@@ -48,10 +48,7 @@ if uploaded_file:
     point_size = st.slider("Scatter point size", 10, 200, 50)
     plot_width = st.slider("Plot width", 4, 16, 8)
     plot_height = st.slider("Plot height", 4, 12, 6)
-    xlim_min = st.number_input("X-axis minimum", value=float(df[x_col].min()))
-    xlim_max = st.number_input("X-axis maximum", value=float(df[x_col].max()))
-    ylim_min = st.number_input("Y-axis minimum", value=float(df[y_col].min()))
-    ylim_max = st.number_input("Y-axis maximum", value=float(df[y_col].max()))
+
 
     # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
@@ -97,6 +94,18 @@ if uploaded_file:
                 X = df_filtered[[x_col]].values
                 y = df_filtered[y_col].values
                 yerr = df_filtered[yerr_col].values if yerr_col != "None" else None
+
+            if not df_filtered.empty:
+                # Safe numeric min/max defaults
+                x_min_val = float(df_filtered[x_col].min())
+                x_max_val = float(df_filtered[x_col].max())
+                y_min_val = float(df_filtered[y_col].min())
+                y_max_val = float(df_filtered[y_col].max())
+
+                xlim_min = st.number_input("X-axis minimum", value=x_min_val)
+                xlim_max = st.number_input("X-axis maximum", value=x_max_val)
+                ylim_min = st.number_input("Y-axis minimum", value=y_min_val)
+                ylim_max = st.number_input("Y-axis maximum", value=y_max_val)
 
                 # --- Fit regression on filtered data ---
                 model = LinearRegression(fit_intercept=not through_origin)
