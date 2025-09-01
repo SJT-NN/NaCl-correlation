@@ -6,7 +6,7 @@ import seaborn as sns
 import colorcet as cc
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-
+st.set_page_config(page_title="Correlation plot", page_icon="📊")
 st.title("📊 Excel Correlation & Regression Visualizer")
 st.text("The code can be found on https://github.com/SJT-NN?tab=repositories")
 
