@@ -41,8 +41,8 @@ if uploaded_file:
     )
 
     # --- Axis label inputs ---
-    custom_x_label = st.text_input("Custom X-axis label", value= "Declared salt concentration (%w/w))
-    custom_y_label = st.text_input("Custom Y-axis label", value="Measured salt concentration (%w/w))
+    custom_x_label = st.text_input("Custom X-axis label", value= "Declared salt concentration (%w/w)")
+    custom_y_label = st.text_input("Custom Y-axis label", value="Measured salt concentration (%w/w)")
     custom_title = st.text_input("Custom title", value="")
 
     # --- Display options ---
