@@ -41,8 +41,8 @@ if uploaded_file:
     )
 
     # --- Axis label inputs ---
-    custom_x_label = st.text_input("Custom X-axis label", value=x_col)
-    custom_y_label = st.text_input("Custom Y-axis label", value=y_col)
+    custom_x_label = st.text_input("Custom X-axis label", value= "Declared salt concentration (%w/w))
+    custom_y_label = st.text_input("Custom Y-axis label", value="Measured salt concentration (%w/w))
     custom_title = st.text_input("Custom title", value="")
 
     # --- Display options ---
@@ -170,16 +170,30 @@ if uploaded_file:
                 # y = x line
                 ax.plot(x_range, x_range, color="gray", linestyle="--", label="y = x")
 
-                # ±20% interval
+                # ±0.375 for x < 1.25, ±20% for x >= 1.25
                 if show_interval:
                     if interval_source == "Regression line":
                         y_fit = model.predict(x_range.reshape(-1, 1))
-                        y_plus, y_minus = y_fit * 1.2, y_fit * 0.8
                     else:
-                        y_plus, y_minus = x_range * 1.2, x_range * 0.8
+                        y_fit = x_range  # y = x identity line
 
-                    ax.fill_between(x_range, y_minus, y_plus, color="green", alpha=0.2,
-                                    label=f"±20% from {interval_source.lower()}")
+                # Create masks
+                mask_low = x_range < 1.25
+                mask_high = ~mask_low
+
+                # Preallocate arrays
+                y_plus = np.empty_like(y_fit)
+                y_minus = np.empty_like(y_fit)
+
+                # Region 1: fixed ±0.375
+                y_plus[mask_low] = y_fit[mask_low] + 0.375
+                y_minus[mask_low] = y_fit[mask_low] - 0.375
+
+                # Region 2: ±20%
+                y_plus[mask_high] = y_fit[mask_high] * 1.2
+                y_minus[mask_high] = y_fit[mask_high] * 0.8
+
+                ax.fill_between(x_range, y_minus, y_plus,color="green", alpha=0.2,label="±0.375 (<1.25) / ±20% (≥1.25)")
 
                 ax.set_xlabel(custom_x_label)
                 ax.set_ylabel(custom_y_label)
