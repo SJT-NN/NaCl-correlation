@@ -53,7 +53,7 @@ if uploaded_file:
     # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
     show_interval = st.checkbox("Show ±20% interval in green")
-    interval_source = st.selectbox("Interval source", ["Regression line", "y = x identity line"])
+    interval_source = st.selectbox("Interval source", ["Regression line", "f(x) = x identity line"])
     use_custom_legend = st.checkbox("Place legend outside of plot", value=False)
 
     if x_col and y_col:
