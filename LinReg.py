@@ -177,23 +177,23 @@ if uploaded_file:
                     else:
                         y_fit = x_range  # y = x identity line
 
-                # Create masks
-                mask_low = x_range < 1.25
-                mask_high = ~mask_low
+                    # Create masks
+                    mask_low = x_range < 1.25
+                    mask_high = ~mask_low
 
-                # Preallocate arrays
-                y_plus = np.empty_like(y_fit)
-                y_minus = np.empty_like(y_fit)
+                    # Preallocate arrays
+                    y_plus = np.empty_like(y_fit)
+                    y_minus = np.empty_like(y_fit)
 
-                # Region 1: fixed ±0.375
-                y_plus[mask_low] = y_fit[mask_low] + 0.375
-                y_minus[mask_low] = y_fit[mask_low] - 0.375
+                    # Region 1: fixed ±0.375
+                    y_plus[mask_low] = y_fit[mask_low] + 0.375
+                    y_minus[mask_low] = y_fit[mask_low] - 0.375
 
-                # Region 2: ±20%
-                y_plus[mask_high] = y_fit[mask_high] * 1.2
-                y_minus[mask_high] = y_fit[mask_high] * 0.8
+                    # Region 2: ±20%
+                    y_plus[mask_high] = y_fit[mask_high] * 1.2
+                    y_minus[mask_high] = y_fit[mask_high] * 0.8
 
-                ax.fill_between(x_range, y_minus, y_plus,color="green", alpha=0.2,label="±0.375 (<1.25) / ±20% (≥1.25)")
+                    ax.fill_between(x_range, y_minus, y_plus,color="green", alpha=0.2,label="±0.375 (<1.25) / ±20% (≥1.25)")
 
                 ax.set_xlabel(custom_x_label)
                 ax.set_ylabel(custom_y_label)
