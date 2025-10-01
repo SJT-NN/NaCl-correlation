@@ -47,8 +47,8 @@ if uploaded_file:
 
     # --- Display options ---
     point_size = st.slider("Scatter point size", 10, 200, 50)
-    plot_width = st.slider("Plot width", 4, 16, 8)
-    plot_height = st.slider("Plot height", 4, 12, 6)
+    plot_width = st.slider("Plot width", 4, 16, 12)
+    plot_height = st.slider("Plot height", 4, 16, 6)
 
     # --- Analysis options ---
     through_origin = st.checkbox("Force regression through (0,0)")
