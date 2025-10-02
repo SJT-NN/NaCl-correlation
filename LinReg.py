@@ -37,7 +37,7 @@ if uploaded_file:
     # --- Color palette selector ---
     palette_source = st.selectbox(
         "Choose color palette source",
-        ["Matplotlib tab20", "Seaborn deep", "Seaborn Set3", "ColorCET glasbey"]
+        ["ColorCET glasbey", "Matplotlib tab20", "Seaborn deep", "Seaborn Set3"]
     )
 
     # --- Axis label inputs ---
